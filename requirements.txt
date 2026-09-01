@@ -1,5 +1,1 @@
-# Optional: common Python dependencies
-flask
-fastapi
-uvicorn
-requests
+This file has been moved to submission_docs/requirements.txt
