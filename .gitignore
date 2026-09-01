@@ -1,0 +1,75 @@
+# Byte-compiled / virtual env
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+dist/
+eggs/
+*.egg-info/
+.installed.cfg
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Pyenv
+.python-version
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+venv/
+ENV/
+env/
+.venv/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+logs/
+*.log
+
+# Static build
+build/
+
+# Misc
+*.sqlite3
+*.db
+
+# Ignore assets that might be large
+/assets/videos/
+/assets/screenshots/

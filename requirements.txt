@@ -1,3 +1,5 @@
+# Optional: common Python dependencies
+flask
 fastapi
 uvicorn
-pydantic
+requests
