@@ -1,0 +1,338 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>QuickDecide — Instant Group Consensus</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- QR Code Generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            // 60% Light Beige & Pure White Base
+            canvas: '#FBF9F5',
+            surface: '#FFFFFF',
+            
+            // 30% Charcoal Structure & Typography
+            charcoal: {
+              50: '#F4F5F4',
+              100: '#E2E5E3',
+              200: '#C7CBC9',
+              500: '#525B56',
+              800: '#2D312E',
+              900: '#1F2421',
+            },
+            
+            // 10% Sophisticated Sage Green & Muted Gold Accent
+            sage: {
+              50: '#F1F6F2',
+              100: '#E1EDE4',
+              500: '#557A61',
+              600: '#405C49',
+              700: '#324738',
+            },
+            gold: {
+              100: '#F7F2EB',
+              400: '#D4BE9B',
+              500: '#C5A880',
+              600: '#A98A60',
+            }
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(31, 36, 33, 0.04), 0 2px 6px -1px rgba(31, 36, 33, 0.02)',
+            'card': '0 10px 30px -5px rgba(31, 36, 33, 0.05), 0 4px 10px -2px rgba(31, 36, 33, 0.03)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      touch-action: manipulation;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-canvas text-charcoal-900 font-sans min-h-screen flex flex-col justify-between selection:bg-sage-500 selection:text-white antialiased">
+
+  <!-- TOP APP HEADER -->
+  <header class="w-full max-w-md mx-auto px-4 py-3.5 flex items-center justify-between border-b border-charcoal-100 sticky top-0 bg-canvas/90 backdrop-blur-md z-40">
+    <div class="flex items-center gap-2.5 cursor-pointer" onclick="app.navigate('landing')">
+      <div class="w-8 h-8 rounded-xl bg-sage-600 flex items-center justify-center shadow-sm">
+        <i class="fa-solid fa-bolt text-white text-xs"></i>
+      </div>
+      <span class="font-bold text-lg tracking-tight text-charcoal-900">QuickDecide</span>
+    </div>
+    <div id="room-badge" class="hidden px-3 py-1 rounded-full bg-surface border border-charcoal-200 text-xs font-mono text-charcoal-800 flex items-center gap-1.5 shadow-sm">
+      <span class="w-2 h-2 rounded-full bg-sage-500 animate-pulse"></span>
+      <span id="badge-room-code" class="font-bold">----</span>
+    </div>
+  </header>
+
+  <!-- MAIN SPA CONTENT ROUTER CONTAINER -->
+  <main class="w-full max-w-md mx-auto px-4 py-6 flex-1 flex flex-col justify-center">
+
+    <!-- 1. VIEW: LANDING / NAVIGATION -->
+    <section id="view-landing" class="space-y-6 text-center">
+      <div class="space-y-3">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sage-50 border border-sage-100 text-sage-700 text-xs font-semibold shadow-sm">
+          <i class="fa-solid fa-wand-magic-sparkles text-sage-600"></i> Zero-Login Consensus
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-charcoal-900 sm:text-4xl leading-tight">
+          Group Decisions, <br/><span class="text-sage-600">Resolved in Seconds.</span>
+        </h1>
+        <p class="text-sm text-charcoal-500 max-w-xs mx-auto">
+          Vote on dinners, activities, or team priorities with frictionless Swipe or Quadratic weighting.
+        </p>
+      </div>
+
+      <div class="space-y-3 pt-2">
+        <button onclick="app.navigate('create')" class="w-full py-3.5 px-6 rounded-2xl bg-sage-600 hover:bg-sage-700 text-white font-semibold text-sm shadow-md shadow-sage-600/15 transition active:scale-[0.98] flex items-center justify-center gap-2">
+          <i class="fa-solid fa-plus-circle text-base"></i> Create a Room
+        </button>
+        <button onclick="app.navigate('join')" class="w-full py-3.5 px-6 rounded-2xl bg-surface hover:bg-charcoal-50 border border-charcoal-200 text-charcoal-800 font-semibold text-sm shadow-soft transition active:scale-[0.98] flex items-center justify-center gap-2">
+          <i class="fa-solid fa-arrow-right-to-bracket text-base text-charcoal-500"></i> Join Existing Room
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. VIEW: CREATE ROOM (HOST) -->
+    <section id="view-create" class="hidden space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-charcoal-100">
+        <h2 class="text-lg font-bold text-charcoal-900 flex items-center gap-2">
+          <i class="fa-solid fa-cube text-sage-600"></i> New Decision Room
+        </h2>
+        <button onclick="app.navigate('landing')" class="text-charcoal-500 hover:text-charcoal-800 text-xs font-semibold">Cancel</button>
+      </div>
+
+      <form id="create-room-form" onsubmit="app.handleCreateRoom(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-1.5">Your Name (Host)</label>
+          <input type="text" id="create-host-name" required placeholder="e.g., Ashish" class="w-full px-4 py-2.5 rounded-xl bg-surface border border-charcoal-200 text-charcoal-900 placeholder-charcoal-400 focus:outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-500/10 shadow-sm transition text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-1.5">Question / Decision Topic</label>
+          <input type="text" id="create-question" required placeholder="e.g., Where should we eat dinner?" class="w-full px-4 py-2.5 rounded-xl bg-surface border border-charcoal-200 text-charcoal-900 placeholder-charcoal-400 focus:outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-500/10 shadow-sm transition text-sm">
+        </div>
+
+        <!-- Voting Mode Selector -->
+        <div>
+          <label class="block text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-1.5">Voting Method</label>
+          <div class="grid grid-cols-2 gap-2 p-1 bg-charcoal-100/70 rounded-xl border border-charcoal-200/80">
+            <label class="cursor-pointer">
+              <input type="radio" name="create-voting-method" value="swipe" class="peer sr-only">
+              <div class="text-center py-2 px-3 rounded-lg text-xs font-bold text-charcoal-500 peer-checked:bg-surface peer-checked:text-sage-700 peer-checked:shadow-sm transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-heart"></i> Swipe Deck
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="create-voting-method" value="quadratic" checked class="peer sr-only">
+              <div class="text-center py-2 px-3 rounded-lg text-xs font-bold text-charcoal-500 peer-checked:bg-surface peer-checked:text-sage-700 peer-checked:shadow-sm transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-scale-balanced"></i> Quadratic
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Dynamic Options Builder -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold text-charcoal-800 uppercase tracking-wider">Options (Minimum 2)</label>
+            <button type="button" onclick="app.addOptionInput()" class="text-xs text-sage-600 hover:text-sage-700 font-bold flex items-center gap-1">
+              <i class="fa-solid fa-plus"></i> Add Option
+            </button>
+          </div>
+          <div id="options-inputs-container" class="space-y-2">
+            <div class="flex gap-2 option-row">
+              <input type="text" required placeholder="Option 1 (e.g., Dominos)" class="option-input flex-1 px-4 py-2.5 rounded-xl bg-surface border border-charcoal-200 text-charcoal-900 placeholder-charcoal-400 focus:outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-500/10 shadow-sm text-sm">
+            </div>
+            <div class="flex gap-2 option-row">
+              <input type="text" required placeholder="Option 2 (e.g., Subway)" class="option-input flex-1 px-4 py-2.5 rounded-xl bg-surface border border-charcoal-200 text-charcoal-900 placeholder-charcoal-400 focus:outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-500/10 shadow-sm text-sm">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-create-submit" class="w-full mt-2 py-3.5 px-6 rounded-xl bg-sage-600 hover:bg-sage-700 text-white font-semibold text-sm shadow-md shadow-sage-600/15 transition active:scale-[0.98] flex items-center justify-center gap-2">
+          <span>Create & Launch Room</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </form>
+    </section>
+
+    <!-- 3. VIEW: JOIN ROOM (PARTICIPANT) -->
+    <section id="view-join" class="hidden space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-charcoal-100">
+        <h2 class="text-lg font-bold text-charcoal-900 flex items-center gap-2">
+          <i class="fa-solid fa-door-open text-sage-600"></i> Join a Room
+        </h2>
+        <button onclick="app.navigate('landing')" class="text-charcoal-500 hover:text-charcoal-800 text-xs font-semibold">Cancel</button>
+      </div>
+
+      <form id="join-room-form" onsubmit="app.handleJoinRoom(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-1.5">4-Letter Room Code</label>
+          <input type="text" id="join-room-code" maxlength="6" required placeholder="e.g., 82R8" class="w-full px-4 py-3 text-center tracking-widest font-mono text-xl uppercase font-bold rounded-xl bg-surface border border-charcoal-200 text-sage-700 placeholder-charcoal-300 focus:outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-500/10 shadow-sm transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-1.5">Your Nickname</label>
+          <input type="text" id="join-nickname" required placeholder="e.g., Tanmay" class="w-full px-4 py-2.5 rounded-xl bg-surface border border-charcoal-200 text-charcoal-900 placeholder-charcoal-400 focus:outline-none focus:border-sage-500 focus:ring-2 focus:ring-sage-500/10 shadow-sm text-sm transition">
+        </div>
+
+        <button type="submit" id="btn-join-submit" class="w-full py-3.5 px-6 rounded-xl bg-sage-600 hover:bg-sage-700 text-white font-semibold text-sm shadow-md shadow-sage-600/15 transition active:scale-[0.98] flex items-center justify-center gap-2">
+          <span>Enter Room</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </form>
+    </section>
+
+    <!-- 4. VIEW: SWIPE VOTING DECK -->
+    <section id="view-swipe" class="hidden space-y-5">
+      <div class="space-y-1.5 text-center">
+        <span id="swipe-progress-pill" class="inline-block px-3 py-0.5 rounded-full bg-surface border border-charcoal-200 text-[11px] font-bold text-charcoal-800 shadow-sm">
+          Option 1 of 3
+        </span>
+        <h2 id="swipe-room-question" class="text-lg font-bold text-charcoal-900 tracking-tight">Question goes here...</h2>
+      </div>
+
+      <!-- Candidate Card Box -->
+      <div class="relative w-full aspect-[4/5] max-h-[360px] rounded-3xl bg-surface border border-charcoal-200 shadow-card p-6 flex flex-col justify-between items-center text-center">
+        <div class="w-full flex justify-end">
+          <span class="w-2.5 h-2.5 rounded-full bg-sage-500"></span>
+        </div>
+        <div class="space-y-1.5">
+          <p class="text-[11px] text-sage-600 uppercase font-extrabold tracking-wider">Candidate Choice</p>
+          <h3 id="swipe-option-title" class="text-2xl font-extrabold text-charcoal-900 px-2">Dominos</h3>
+        </div>
+        <p class="text-xs text-charcoal-400 font-medium">Tap Pass or Like below</p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-2 gap-4 pt-1">
+        <button onclick="app.submitSwipeVote(false)" class="py-3.5 rounded-2xl bg-surface border border-charcoal-200 hover:bg-charcoal-50 text-charcoal-700 font-bold text-sm shadow-soft transition active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-xmark text-lg text-charcoal-400"></i> Pass
+        </button>
+        <button onclick="app.submitSwipeVote(true)" class="py-3.5 rounded-2xl bg-sage-50 border border-sage-200 hover:bg-sage-100 text-sage-700 font-bold text-sm shadow-soft transition active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-heart text-lg text-sage-600"></i> Like
+        </button>
+      </div>
+    </section>
+
+    <!-- 5. VIEW: QUADRATIC VOTING INTERFACE -->
+    <section id="view-quadratic" class="hidden space-y-4">
+      <!-- Sticky Remaining Budget HUD -->
+      <div class="p-3.5 rounded-2xl bg-surface border border-charcoal-200 sticky top-14 z-30 shadow-soft space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-charcoal-500 uppercase tracking-wider">Credit Budget</span>
+          <span class="text-xs font-mono font-extrabold text-sage-700"><span id="quad-credits-remaining">16</span> / 16 Credits Left</span>
+        </div>
+        <!-- Progress Bar -->
+        <div class="w-full h-2 bg-charcoal-100 rounded-full overflow-hidden">
+          <div id="quad-budget-bar" class="h-full bg-sage-600 transition-all duration-300" style="width: 100%"></div>
+        </div>
+      </div>
+
+      <div class="text-center space-y-1">
+        <h2 id="quad-room-question" class="text-lg font-bold text-charcoal-900">Where should we eat?</h2>
+        <p class="text-xs text-charcoal-500 font-medium">Allocate credits ($1$–$16$). Impact = $\sqrt{\text{credits}}$.</p>
+      </div>
+
+      <!-- Dynamic Allocator Cards Container -->
+      <div id="quadratic-options-list" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1 hide-scrollbar">
+        <!-- Rendered by app.js -->
+      </div>
+
+      <button onclick="app.submitAllQuadraticVotes()" id="btn-submit-quad" class="w-full py-3.5 px-6 rounded-xl bg-sage-600 hover:bg-sage-700 text-white font-semibold text-sm shadow-md shadow-sage-600/15 transition active:scale-[0.98] flex items-center justify-center gap-2">
+        <span>Submit All Votes</span>
+        <i class="fa-solid fa-check text-xs"></i>
+      </button>
+    </section>
+
+    <!-- 6. VIEW: LIVE RESULTS / LEADERBOARD -->
+    <section id="view-results" class="hidden space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-charcoal-100">
+        <div>
+          <span class="text-[11px] font-bold text-sage-600 uppercase tracking-wider flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-sage-500 animate-ping"></span> Live Results
+          </span>
+          <h2 id="results-room-question" class="text-lg font-bold text-charcoal-900">Question Title</h2>
+        </div>
+        <button onclick="app.openShareModal()" class="px-3 py-1.5 rounded-xl bg-surface border border-charcoal-200 hover:bg-charcoal-50 text-xs font-bold text-charcoal-800 flex items-center gap-1.5 shadow-sm transition">
+          <i class="fa-solid fa-share-nodes text-sage-600"></i> Invite
+        </button>
+      </div>
+
+      <!-- Winner Spotlight Pod (Muted Gold & Beige Accents) -->
+      <div id="winner-podium-card" class="p-5 rounded-2xl bg-gold-100/60 border border-gold-400/50 text-center space-y-1 shadow-card">
+        <div class="inline-block p-2 rounded-full bg-gold-100 text-gold-600 text-base mb-1">
+          <i class="fa-solid fa-crown"></i>
+        </div>
+        <p class="text-[11px] font-bold text-gold-600 uppercase tracking-wider">Current Consensus Winner</p>
+        <h3 id="winner-title" class="text-2xl font-black text-charcoal-900">TBD</h3>
+        <p id="winner-score" class="text-xs text-charcoal-600 font-mono font-bold">Score: 0.0</p>
+      </div>
+
+      <!-- Leaderboard List -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs text-charcoal-500 font-bold px-1">
+          <span>Ranked Options</span>
+          <span id="results-participant-count">0 Voters</span>
+        </div>
+        <div id="leaderboard-items" class="space-y-2">
+          <!-- Rendered dynamically by polling loop -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SHARE / QR MODAL -->
+  <div id="share-modal" class="hidden fixed inset-0 bg-charcoal-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl bg-surface border border-charcoal-200 p-6 space-y-4 text-center shadow-2xl">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-charcoal-900 text-base">Invite Friends</h3>
+        <button onclick="app.closeShareModal()" class="text-charcoal-400 hover:text-charcoal-800"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="p-3 bg-canvas border border-charcoal-100 rounded-2xl w-fit mx-auto shadow-inner" id="qrcode-container"></div>
+      <div class="space-y-0.5">
+        <p class="text-xs text-charcoal-400 font-medium">Room Code</p>
+        <p id="share-code-display" class="font-mono text-2xl font-black tracking-widest text-sage-700">----</p>
+      </div>
+      <button onclick="app.copyInviteLink()" id="btn-copy-link" class="w-full py-2.5 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 border border-charcoal-200 text-charcoal-800 text-xs font-bold flex items-center justify-center gap-2 transition">
+        <i class="fa-solid fa-copy text-charcoal-500"></i> Copy Share Link
+      </button>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl bg-charcoal-900 text-white text-xs font-semibold shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+    <span id="toast-icon"></span>
+    <span id="toast-message">Message</span>
+  </div>
+
+  <!-- LOAD APPLICATION JAVASCRIPT -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
